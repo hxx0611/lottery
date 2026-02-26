@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>七妈群内晒单抽奖</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial;
+      background: radial-gradient(circle at top, #1a2a6c, #16213e, #0f3460);
+      color: #fff;
+      min-height: 100vh;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1000px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 18px;
+      padding: 18px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    }
+
+    h1 {
+      text-align: center;
+      margin: 6px 0 16px;
+      font-size: 28px;
+      letter-spacing: 2px;
+      font-weight: bold;
+    }
+
+    textarea {
+      width: 100%;
+      height: 110px;
+      border-radius: 12px;
+      border: none;
+      padding: 12px;
+      font-size: 14px;
+      resize: vertical;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .left-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="number"] {
+      width: 90px;
+      padding: 6px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 18px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+      font-weight: bold;
+    }
+
+    button:active { transform: scale(0.94); }
+
+    .primary { background: #ff4d4f; color: #fff; }
+    .secondary { background: #1890ff; color: #fff; }
+    .danger { background: #ff7875; color: #fff; }
+
+    .machine {
+      margin-top: 20px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 20px;
+      padding: 18px;
+      border: 2px solid rgba(255,255,255,0.1);
+      min-height: 200px;
+      overflow: hidden;
+    }
+
+    .machine-title {
+      text-align: center;
+      margin-bottom: 12px;
+      font-size: 16px;
+      opacity: 0.9;
+    }
+
+    .ball-pool {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+      min-height: 150px;
+      position: relative;
+    }
+
+    .pool-ball {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      box-shadow: inset -3px -3px 6px rgba(0,0,0,0.35),
+                  inset 2px 2px 4px rgba(255,255,255,0.5);
+      transition: transform 0.05s, filter 0.05s, box-shadow 0.05s;
+    }
+
+    /* 甩动效果（更像摇奖机） */
+    .shaking .pool-ball {
+      animation: shake 0.25s infinite ease-in-out;
+    }
+
+    @keyframes shake {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(6px, -6px) rotate(15deg); }
+      50% { transform: translate(-6px, 6px) rotate(-15deg); }
+      75% { transform: translate(6px, 4px) rotate(10deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+
+    /* 跑马灯高亮（最终停在中奖球） */
+    .highlight {
+      transform: scale(2) !important;
+      filter: brightness(2);
+      box-shadow: 0 0 12px #fff, 0 0 25px #ffd700;
+      z-index: 2;
+    }
+
+    .result-area {
+      margin-top: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 18px;
+      min-height: 90px;
+    }
+
+    .winner-ball {
+      width: 95px;
+      height: 95px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffffff, #ffd700);
+      color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      text-align: center;
+      padding: 10px;
+      animation: pop 0.6s ease;
+      word-break: break-word;
+      box-shadow: 0 12px 25px rgba(0,0,0,0.45);
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.2) rotate(0deg); opacity: 0; }
+      60% { transform: scale(1.2) rotate(360deg); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+
+    @media (max-width: 600px) {
+      .winner-ball { width: 72px; height: 72px; font-size: 12px; }
+      h1 { font-size: 22px; }
+      .pool-ball { width: 16px; height: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎉 七妈群内晒单抽奖</h1>
+
+    <textarea id="nameInput" placeholder="粘贴群内参与晒单名单（每行一个人）"></textarea>
+
+    <div class="controls">
+      <div class="left-controls">
+        <label>每次抽：</label>
+        <input type="number" id="drawCount" value="1" min="1" />
+        <button class="primary" onclick="startDraw()">开始抽奖</button>
+        <button class="secondary" onclick="resetPool()">初始化抽奖池</button>
+        <button class="danger" onclick="clearResult()">清空结果</button>
+      </div>
+    </div>
+
+    <div class="machine">
+      <div class="machine-title">🎱 抽奖池</div>
+      <div class="ball-pool" id="ballPool"></div>
+    </div>
+
+    <div class="result-area" id="result"></div>
+  </div>
+
+  <script>
+    let pool = [];
+    let isDrawing = false;
+    let currentHighlightIndex = -1;
+    const colors = ['#ff4d4f','#40a9ff','#73d13d','#ffd666','#9254de','#36cfc9','#ff7a45','#597ef7','#f759ab','#ffa940'];
+
+    function parseNames() {
+      const text = document.getElementById('nameInput').value.trim();
+      if (!text) return [];
+      return text.split('\n').map(n => n.trim()).filter(n => n);
+    }
+
+    function renderBallPool() {
+      const poolDiv = document.getElementById('ballPool');
+      poolDiv.innerHTML = '';
+
+      // 彩球数量 = 名单人数（但不显示人数文字）
+      for (let i = 0; i < pool.length; i++) {
+        const ball = document.createElement('div');
+        ball.className = 'pool-ball';
+        ball.style.background = colors[i % colors.length];
+        poolDiv.appendChild(ball);
+      }
+    }
+
+    function resetPool() {
+      const names = parseNames();
+      if (names.length === 0) {
+        alert('请先粘贴人员名单');
+        return;
+      }
+      pool = [...names];
+      document.getElementById('result').innerHTML = '';
+      renderBallPool();
+    }
+
+    function clearResult() {
+      document.getElementById('result').innerHTML = '';
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // 超高速跑马灯，并返回最终停下的球索引（即中奖球）
+    async function marqueeEffect(duration = 2500) {
+      const balls = document.querySelectorAll('.pool-ball');
+      const total = balls.length;
+      if (total === 0) return -1;
+
+      let position = Math.floor(Math.random() * total);
+      const startTime = Date.now();
+
+      while (Date.now() - startTime < duration) {
+        // 清除全部高亮
+        balls.forEach(b => b.classList.remove('highlight'));
+
+        // 三连光带，视觉更像双色球高速滚动
+        balls[position % total].classList.add('highlight');
+        balls[(position + 1) % total].classList.add('highlight');
+        balls[(position + 2) % total].classList.add('highlight');
+
+        currentHighlightIndex = position % total;
+
+        // 前期极快，后期微减速（更像真实开奖）
+        const elapsed = Date.now() - startTime;
+        const progress = elapsed / duration;
+        const delay = progress < 0.7 ? 4 : 10; // 超高速滚动
+
+        position++;
+        await sleep(delay);
+      }
+
+      // 最终只保留中奖球高亮
+      balls.forEach(b => b.classList.remove('highlight'));
+      if (currentHighlightIndex >= 0 && balls[currentHighlightIndex]) {
+        balls[currentHighlightIndex].classList.add('highlight');
+      }
+
+      return currentHighlightIndex;
+    }
+
+    async function startDraw() {
+      if (isDrawing) return;
+
+      if (pool.length === 0) {
+        const names = parseNames();
+        if (names.length === 0) {
+          alert('请先输入人员名单');
+          return;
+        }
+        pool = [...names];
+        renderBallPool();
+      }
+
+      let count = parseInt(document.getElementById('drawCount').value) || 1;
+      count = Math.min(count, pool.length);
+      if (count <= 0) return;
+
+      isDrawing = true;
+      const poolDiv = document.getElementById('ballPool');
+      const resultDiv = document.getElementById('result');
+
+      const winners = [];
+
+      for (let i = 0; i < count; i++) {
+        if (pool.length === 0) break;
+
+        // 重新渲染当前剩余彩球
+        renderBallPool();
+        await sleep(50);
+
+        // 开始甩动
+        poolDiv.classList.add('shaking');
+
+        // 跑马灯开奖（最终停下的位置 = 中奖球）
+        const winIndex = await marqueeEffect(2500);
+
+        // 停止甩动
+        poolDiv.classList.remove('shaking');
+
+        if (winIndex >= 0 && winIndex < pool.length) {
+          const winner = pool[winIndex];
+          winners.push(winner);
+          pool.splice(winIndex, 1); // 自动排除已中奖
+        }
+
+        await sleep(300);
+      }
+
+      // 显示中奖结果
+      winners.forEach(name => {
+        const ball = document.createElement('div');
+        ball.className = 'winner-ball';
+        ball.innerText = name;
+        resultDiv.appendChild(ball);
+      });
+
+      // 重新渲染剩余彩球
+      renderBallPool();
+      isDrawing = false;
+    }
+  </script>
+</body>
+</html>
